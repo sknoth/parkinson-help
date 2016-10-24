@@ -1,5 +1,9 @@
 var request = require("request");
+var async = require("async");
+var requestRetry = require('requestretry');
+
 var parseString = require('xml2js').parseString;
+var parse = require('csv-parse');
 var util = require('util');
 
 var me = module.exports = {
@@ -15,9 +19,12 @@ var me = module.exports = {
     me.userData = [];
     me.patientData = [];
     me.medicineData = [];
+    me.testSessionData = [];
     me.therapyData = [];
     me.therapyListData = [];
     me.testSessions = [];
+me.csvDatasets = [];
+    me.counter = me.csvCounter = 0;
 
     me.init();
 
@@ -77,93 +84,172 @@ var me = module.exports = {
     request("http://4me302-16.site88.net/getData.php?table=Medicine",
       function(error, response, data) {
         parseString(data, function (err, result) {
+
           for (var i = 0; i < result.Medicine.medicineID.length; i++) {
             me.medicineData.push({'name': result.Medicine.medicineID[0].name});
           }
-          me.getTestSessionData(0);
+
+          me.getTestSessionData2();
         });
       });
   },
 
-  getTestSessionData() {
+  /**
+   * This function assumes that ALL testsessions are accessible by the user with userid 1
+   */
+  getTestSessionData2() {
+    console.log('getTestSessionData2');
 
-    request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDpatient&value=' + me.patientID,
+    request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDmed&value=1',
       function(error, response, data) {
         parseString(data, function (err, result) {
 
-          me.testSessions = result.EData.test_sessionID;
-
-          if(!me.testSessions) {
-            me.render();
-            return;
-          }
-
-          var medicineID,
+          var testSessions = result.EData.test_sessionID,
+              medicineID,
               therapyID;
 
-          for (var i = 0; i < me.testSessions.length; i ++) {
+          for (var i = 0; i < testSessions.length; i ++) {
 
-            therapyID = me.therapyData[me.testSessions[i].therapyID-1].TherapyList_IDtherapylist;
-
-            me.testSessions[i].therapyName = me.therapyListData[therapyID-1].name;
-            me.testSessions[i].dosage = me.therapyListData[therapyID-1].Dosage;
-
+            therapyID = me.therapyData[testSessions[i].therapyID-1].TherapyList_IDtherapylist;
             medicineID = me.therapyListData[therapyID-1].Medicine_IDmedicine;
-            me.testSessions[i].medicineName = me.medicineData[medicineID-1].name;
 
-            me.testSessions[i].dataURL = 'http://4me302-16.site88.net/'+ me.testSessions[i].DataURL + '.csv'
+            me.testSessionData.push({
+              'id': testSessions[i].$.id,
+              'patientID': parseInt(testSessions[i].User_IDpatient[0]),
+              'datetime': testSessions[i].test_datetime[0],
+              'therapyName': me.therapyListData[therapyID-1].name[0],
+              'dosage': me.therapyListData[therapyID-1].Dosage[0],
+              'medicineName': me.medicineData[medicineID-1].name[0],
+              'dataURL': 'http://4me302-16.site88.net/'+ testSessions[i].DataURL + '.csv'
+            });
           }
-
-          me.patientData.push({
-            username: me.getUsername(),
-            therapyData: me.testSessions
-          });
-
-          me.getPatientData();
+          me.getCSVData();
         });
       });
   },
 
-  getUsername() {
+  getCSVData() {
+    console.log('getCSVData');
+
+    var lookupList = [];
+
+    for (var i = 0; i < me.testSessionData.length; i++) {
+      lookupList.push({
+        testSessionID: me.testSessionData[i].id,
+        dataURL: me.testSessionData[i].dataURL
+      });
+    }
+
+    async.map(lookupList, function (item, callback) {
+      requestRetry({
+          url: item.dataURL,
+          maxAttempts: 20,
+          retryDelay: 20,
+          retryStrategy: requestRetry.RetryStrategies.HTTPOrNetworkError
+        },
+        function (error, response, body) {
+
+          var resultObj = {};
+
+          if (!error && response.statusCode === 200) {
+            resultObj.body = body;
+            resultObj.testSessionID = item.testSessionID;
+            callback(null, resultObj);
+          } else {
+            console.log(error);
+            callback(error || response.statusCode);
+          }
+        });
+    },
+    // this gets called after all requests are finished
+    function (error, results) {
+
+      if (!error) {
+        me.parseCSVDatasets(results);
+      }
+    });
+  },
+
+  parseCSVDatasets(datasets) {
+    console.log('parseCSVDatasets', datasets.length);
+
+    async.map(datasets, function (dataset, callback) {
+
+      parse(dataset.body, {
+          delimiter: ',',
+          newline: '\r'
+        },
+        function(error, output) {
+
+          var resultObj = {};
+
+          if (!error) {
+            resultObj.body = output;
+            resultObj.testSessionID = dataset.testSessionID;
+            callback(null, resultObj);
+          } else {
+            console.log(error);
+            callback(error || response.statusCode);
+          }
+      });
+    },
+    // this gets called after all requests are finished
+    function (error, results) {
+
+      if (!error) {
+        console.log('parseCSVDatasets results',results.length, results[0].testSessionID);
+
+        for (var i = 0; i < results.length; i++) {
+          me.testSessionData[i].csvData = results[i].body;
+        }
+console.log('me.testSessions ---', me.testSessionData.length, me.testSessionData);
+        me.assemblePatientData();
+      }
+    });
+  },
+
+  /**
+   * This function takes all the data that was collected through previous requests
+   * and "assembles" complete patient data objects, by creating one object for each
+   * patient that contains the patient name and his testsessions... ;)
+   */
+  assemblePatientData() {
+
+    var currentPatientID = me.testSessionData[0].patientID;
+
+    me.patientData.push({
+      username: me.getUsername(currentPatientID),
+      testSessions: []
+    });
+
+    for (var i = 0; i < me.testSessionData.length; i++) {
+
+      if (me.testSessionData[i].patientID !== currentPatientID) {
+
+        currentPatientID = parseInt(me.testSessionData[i].patientID);
+
+        me.patientData.push({
+          username: me.getUsername(currentPatientID),
+          testSessions: [me.testSessionData[i]]
+        });
+
+      } else {
+
+          me.patientData[me.patientData.length - 1].testSessions.push(me.testSessionData[i]);
+      }
+    }
+
+    me.render();
+  },
+
+  getUsername(patientID) {
 
     for (var i = 0; i < me.userData.length; i++) {
 
-      if (parseInt(me.userData[i].id) === me.patientID) {
+      if (parseInt(me.userData[i].id) === patientID) {
         return me.userData[i].username[0];
       }
     }
-  },
-
-  getPatientData() {
-
-    request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDmed&value=' + me.userID,
-      function(error, response, data) {
-        parseString(data, function (err, result) {
-
-          if (!me.counter) {
-            me.counter = 0;
-          }
-
-          if (me.counter === result.EData.test_sessionID.length) {
-            console.log(me.patientData);
-            me.render();
-            return;
-          }
-
-          var currPatientID;
-          for (me.counter; me.counter < result.EData.test_sessionID.length; me.counter++) {
-
-            currentPatientID = parseInt(result.EData.test_sessionID[me.counter].User_IDpatient[0]);
-
-            if (me.patientID !== currentPatientID) {
-
-              // updating patientID if this session was done by another patient than previous session
-              me.patientID = currentPatientID;
-              me.getTestSessionData();
-            }
-          }
-        });
-      });
   },
 
   /*
@@ -178,6 +264,8 @@ var me = module.exports = {
   },
 
   render() {
+    console.log('render');
+
     me.res.render(me.page, {
       message: me.req.flash('patient overview'),
       user : me.req.user,

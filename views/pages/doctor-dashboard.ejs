@@ -15,19 +15,19 @@
         </div>
       <% //} %>
     <section>
-      <h2>the title</h2>
+      <h2>Doctor Dashboard</h2>
       <hr>
       <% for(var i in patientData) { %>
         <h3><%= patientData[i].username %></h3>
         <ul>
-          <% for(var j in patientData[i].therapyData) { %>
+          <% for(var j in patientData[i].testSessions) { %>
           <li>
-            <p><b>Therapy Name:</b><%= patientData[i].therapyData[j].therapyName[0] %></p>
-            <p><b>Date:</b><%= patientData[i].therapyData[j].test_datetime[0] %></p>
-            <p><b>Medicine:</b><%= patientData[i].therapyData[j].medicineName[0] %></p>
-            <p><b>Dosage:</b><%= patientData[i].therapyData[j].dosage[0] %></p>
-            <p><b>DataURL:</b><a href="<%= patientData[i].therapyData[j].dataURL %>">
-              <%= patientData[i].therapyData[j].dataURL %></a></p>
+            <p><b>Therapy Name:</b><%= patientData[i].testSessions[j].therapyName %></p>
+            <p><b>Date:</b><%= patientData[i].testSessions[j].datetime %></p>
+            <p><b>Medicine:</b><%= patientData[i].testSessions[j].medicineName %></p>
+            <p><b>Dosage:</b><%= patientData[i].testSessions[j].dosage %></p>
+            <p><b>DataURL:</b><a href="<%= patientData[i].testSessions[j].dataURL %>">
+              <%= patientData[i].testSessions[j].dataURL %></a></p>
           </li>
           <% } %>
         </ul>
