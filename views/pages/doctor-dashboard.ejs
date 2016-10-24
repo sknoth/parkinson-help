@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<% include ../partials/head %>
+<body class="container">
+  <div class="page-header text-center">
+    <h1><span class="fa fa-medkit"></span> Doctor Dashboard</h1>
+  </div>
+  <% include ../partials/header %>
+
+  <main>
+      <% //if (user.Role_RoleID) { %>
+        <div class="alert alert-info" role="alert">
+           Take a look at some awesome videos at the
+          <a class="alert-link" href="/video-list">video list</a> page.
+        </div>
+      <% //} %>
+    <section>
+      <h2>the title</h2>
+      <hr>
+      <% for(var i in patientData) { %>
+        <h3><%= patientData[i].username %></h3>
+        <ul>
+          <% for(var j in patientData[i].therapyData) { %>
+          <li>
+            <p><b>Therapy Name:</b><%= patientData[i].therapyData[j].therapyName[0] %></p>
+            <p><b>Date:</b><%= patientData[i].therapyData[j].test_datetime[0] %></p>
+            <p><b>Medicine:</b><%= patientData[i].therapyData[j].medicineName[0] %></p>
+            <p><b>Dosage:</b><%= patientData[i].therapyData[j].dosage[0] %></p>
+            <p><b>DataURL:</b><a href="<%= patientData[i].therapyData[j].dataURL %>">
+              <%= patientData[i].therapyData[j].dataURL %></a></p>
+          </li>
+          <% } %>
+        </ul>
+        <% } %>
+    </section>
+  </div>
+
+  </main>
+
+  <% include ../partials/footer %>
+
+  <script>
+  console.log(<%- JSON.stringify(patientData) %>);
+  </script>
+</body>
+</html>

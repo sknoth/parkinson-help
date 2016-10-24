@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<% include ../partials/head %>
+<body class="container">
+
+  <div class="page-header text-center">
+    <h1><span class="fa fa-anchor"></span> Profile Page</h1>
+  </div>
+
+  <% include ../partials/header %>
+
+    <div class="row">
+
+        <!-- LOCAL INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3><span class="fa fa-user"></span> Local</h3>
+
+                  <% if (user.email) { %>
+                    <p>
+                      <strong>id</strong>: <%= user._id %><br>
+                        <strong>userID</strong>: <%= user.userID %><br>
+                        <strong>email</strong>: <%= user.email %><br>
+                        <strong>password</strong>: <%= user.password %><br>
+                        <strong>role</strong>: <%= user.Role_RoleID %>
+                    </p>
+                  <% } %>
+            </div>
+        </div>
+
+        <!-- FACEBOOK INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3 class="text-primary"><span class="fa fa-facebook"></span> Facebook</h3>
+
+                  <!-- check if the user has this token (is the user authenticated with this social account) -->
+                  <% if (user.facebook_id) { %>
+                    <p>
+                        <strong>id</strong>: <%= user.facebook_id %><br>
+                        <strong>token</strong>: <%= user.facebook_token %><br>
+                        <strong>email</strong>: <%= user.facebook_email %><br>
+                        <strong>name</strong>: <%= user.facebook_name %><br>
+                        <strong>role</strong>: <%= user.Role_RoleID %>
+                    </p>
+                  <% } %>
+            </div>
+        </div>
+
+        <!-- TWITTER INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3 class="text-info"><span class="fa fa-twitter"></span> Twitter</h3>
+
+                  <!-- check if the user has this token (is the user authenticated with this social account) -->
+                  <% if (user.twitter_id) { %>
+                    <p>
+                        <strong>id</strong>: <%= user.twitter_id %><br>
+                        <strong>token</strong>: <%= user.twitter_token %><br>
+                        <strong>username</strong>: <%= user.twitter_username %><br>
+                        <strong>displayName</strong>: <%= user.twitter_displayName %><br>
+                        <strong>role</strong>: <%= user.Role_RoleID %>
+                    </p>
+                  <% } %>
+            </div>
+        </div>
+
+        <!-- GOOGLE INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3 class="text-danger"><span class="fa fa-google-plus"></span> Google</h3>
+
+                <!-- check if the user has this token (is the user authenticated with this social account) -->
+                <% if (user.google_id) { %>
+                    <p>
+                        <strong>id</strong>: <%= user.google_id %><br>
+                        <strong>token</strong>: <%= user.google_token %><br>
+                        <strong>email</strong>: <%= user.google_email %><br>
+                        <strong>name</strong>: <%= user.google_name %><br>
+                        <strong>role</strong>: <%= user.Role_RoleID %>
+                    </p>
+                  <% } %>
+            </div>
+        </div>
+
+    </div>
+
+
+<% include ../partials/footer %>
+
+</body>
+</html>

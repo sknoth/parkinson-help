@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<% include ../partials/head %>
+<body class="container">
+  <div class="page-header text-center">
+    <h1><span class="fa fa-medkit"></span> RSS Feed</h1>
+  </div>
+  <% include ../partials/header %>
+
+  <main>
+      <div class="alert alert-info" role="alert">
+        On this page  a patient can get information on his or her treatments and tests.
+      </div>
+      <% if (typeof user === 'undefined') { %>
+        <div class="alert alert-danger" role="alert">
+          You need to be logged in to view this page.
+        </div>
+      <% } else {%>
+        <h3>My Test Sessions</h3>
+        <ul>
+
+          <% for(var i in testSessions) { %>
+            <li>
+              <p><b>Name</b>: <%= testSessions[i].therapyName %></p>
+              <p><b>Date</b>: <%= testSessions[i].test_datetime[0] %></p>
+              <p><b>Medicine</b>: <%= testSessions[i].medicineName %></p>
+              <p><b>Dosage</b>: <%= testSessions[i].dosage %></p>
+              <p><a>show test results for <%= testSessions[i].dataURL %></a></p>
+            </li>
+          <% } %>
+        </ul>
+      <% } %>
+
+      <% include ../partials/footer %>
+
+      <script>
+      console.log(<%- JSON.stringify(testSessions) %>);
+      </script>
+    </main>
+  </body>
+</html>
