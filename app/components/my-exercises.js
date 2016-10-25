@@ -11,7 +11,6 @@ var me = module.exports = {
   therapyListData: [],
   testSessions: [],
   videoIds: [],
-  userID: 0,
   page: '',
   req: '',
   res: '',
@@ -64,8 +63,11 @@ var me = module.exports = {
       });
   },
 
+  /**
+   * hack: hardcoded patientID...
+   */
   getTestSessionData() {
-    request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDpatient&value=' + me.userID,
+    request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDpatient&value=3',
       function(error, response, data) {
         parseString(data, function (err, result) {
 
@@ -80,7 +82,6 @@ var me = module.exports = {
               therapyID;
 
           for (var i = 0; i < me.testSessions.length; i ++) {
-            console.log('testSessions', me.therapyListData, me.testSessions[i].therapyID);
 
             therapyID = me.therapyData[me.testSessions[i].therapyID-1].TherapyList_IDtherapylist;
 
@@ -109,13 +110,23 @@ var me = module.exports = {
           me.videoIds.push(videos[key].snippet.resourceId.videoId);
         }
 
-        me.calculateTestSessionStatistics();
+        me.calculateStatistics();
       });
   },
 
-  calculateTestSessionStatistics() {
+  /**
+   * TODO: calculate the statistics based on day, week, month
+   */
+  calculateStatistics() {
 
-    console.log(me.testSessions[0]);
+    // var datetime = me.testSessions[0].test_datetime,
+    //     month = datetime.split(' ')[0].split('-')[2];
+    //
+    // for (var i = 1; i < me.testSessions.length; i++) {
+    //   datetime = me.testSessions[i].test_datetime;
+    //   month = datetime.split(' ')[0].split('-')[2];
+    // }
+
     me.render();
   },
 
@@ -129,20 +140,7 @@ var me = module.exports = {
       return;
     }
 
-    me.setUserID(req.user.username);
-
     me.init();
-  },
-
-  /*
-  * Helper to map users from our db to api users
-  */
-  setUserID(username) {
-    if (username === 'patient1') {
-      me.userID = 3;
-    } if (username === 'patient2') {
-      me.userID = 4;
-    }
   },
 
   render() {
