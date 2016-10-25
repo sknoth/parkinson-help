@@ -8,39 +8,54 @@
   <% include ../partials/header %>
 
   <main>
-      <% //if (user.Role_RoleID) { %>
-        <div class="alert alert-info" role="alert">
-           Take a look at some awesome videos at the
-          <a class="alert-link" href="/video-list">video list</a> page.
+    <% if (1 === 0 || typeof user != 'undefined' && user.Role_RoleID === 1) { %>
+        <div class="alert alert-danger" role="alert">
+          You are not allowed to see this page.
         </div>
-      <% //} %>
+    <% } else { %>
     <section>
-      <h2>Doctor Dashboard</h2>
-      <hr>
-      <% for(var i in patientData) { %>
-        <h3><%= patientData[i].username %></h3>
-        <ul>
-          <% for(var j in patientData[i].testSessions) { %>
-          <li>
-            <p><b>Therapy Name:</b><%= patientData[i].testSessions[j].therapyName %></p>
-            <p><b>Date:</b><%= patientData[i].testSessions[j].datetime %></p>
-            <p><b>Medicine:</b><%= patientData[i].testSessions[j].medicineName %></p>
-            <p><b>Dosage:</b><%= patientData[i].testSessions[j].dosage %></p>
-            <p><b>DataURL:</b><a href="<%= patientData[i].testSessions[j].dataURL %>">
-              <%= patientData[i].testSessions[j].dataURL %></a></p>
-          </li>
-          <% } %>
-        </ul>
-        <% } %>
+      <h2>Test Session Analysis</h2>
+
+      <div class="row">
+        <div class="col-md-3 col-sm-4">
+          <% for(var i in patientData) { %>
+            <h3><%= patientData[i].username %></h3>
+            <ul class="list-unstyled list-striped">
+              <% for(var j in patientData[i].testSessions) { %>
+              <li class="js-showData-<%= i %>-<%= j %>">
+                <p><b>Therapy Name:</b><%= patientData[i].testSessions[j].therapyName %></p>
+                <p><b>Date:</b><%= patientData[i].testSessions[j].datetime %></p>
+                <p><b>Medicine:</b><%= patientData[i].testSessions[j].medicineName %></p>
+                <p><b>Dosage:</b><%= patientData[i].testSessions[j].dosage %></p>
+                <p><b>DataURL:</b><a href="<%= patientData[i].testSessions[j].dataURL %>">
+                  <%= patientData[i].testSessions[j].dataURL %></a></p>
+              </li>
+              <% } %>
+            </ul>
+            <hr>
+            <% } %>
+        </div>
+        <div class="col-md-9 col-sm-8">
+          <div class="wrapper">
+            <div id="chart_div">
+              <div class="alert alert-info" role="alert">
+                 Please select a test session on the right.
+              </div>
+            </div>
+          </div>
+          <h3>Notes</h3>
+          <ul class="js-notelist list-unstyled list-striped"></ul>
+        </div>
+      </div>
     </section>
   </div>
 
+  <% } %>
   </main>
 
   <% include ../partials/footer %>
-
-  <script>
-  console.log(<%- JSON.stringify(patientData) %>);
+  <script type="text/javascript">
+    <% include ../components/doctor-dashboard.js %>
   </script>
 </body>
 </html>

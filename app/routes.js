@@ -1,12 +1,9 @@
 var request = require("request");
 
 // Pages
-var managePatients = require('./components/manage-patients.js');
 var findPatients = require('./components/find-patients.js');
 var myExercises = require('./components/my-exercises.js');
 var doctorDashboard = require('./components/doctor-dashboard.js');
-var videoList = require('./components/video-list.js');
-var rssFeed = require('./components/rss-feed.js');
 
 module.exports = function(app, passport) {
 
@@ -17,30 +14,17 @@ module.exports = function(app, passport) {
         res.render('index.ejs'); // load the index.ejs file
     });
 
-    app.get('/manage-patients', isLoggedIn, function(req, res) {
-      managePatients.renderPage('pages/manage-patients.ejs', req, res);
-    });
-
-    app.get('/video-list', isLoggedIn, function(req, res) {
-      videoList.renderPage('pages/video-list.ejs', req, res);
-    });
-
-    app.get('/rss-feed', isLoggedIn, function(req, res) {
-      rssFeed.renderPage('pages/rss-feed.ejs', req, res);
-    });
-
-    app.get('/my-exercises', function(req, res) {
+    app.get('/my-exercises', isLoggedIn, function(req, res) {
       myExercises.renderPage('pages/my-exercises.ejs', req, res);
     });
 
-    app.get('/doctor-dashboard', function(req, res) {
+    app.get('/doctor-dashboard',  function(req, res) {
       doctorDashboard.renderPage('pages/doctor-dashboard.ejs', req, res);
     });
 
     app.get('/find-patients', isLoggedIn, function(req, res) {
       findPatients.renderPage('pages/find-patients.ejs', req, res);
     });
-
 
     // we will want this protected so you have to be logged in to visit
     // we will use route middleware to verify this (the isLoggedIn function)

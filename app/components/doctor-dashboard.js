@@ -13,25 +13,19 @@ var me = module.exports = {
     me.req = req;
     me.res = res;
 
-    me.userID = 1;
-    me.patientID = 3;
-
     me.userData = [];
     me.patientData = [];
     me.medicineData = [];
+    me.noteData = [];
     me.testSessionData = [];
     me.therapyData = [];
     me.therapyListData = [];
-    me.testSessions = [];
-me.csvDatasets = [];
-    me.counter = me.csvCounter = 0;
 
     me.init();
 
   },
 
   init() {
-    // me.setUserID(me.req.user.username);
     me.getUserData();
   },
 
@@ -85,20 +79,23 @@ me.csvDatasets = [];
       function(error, response, data) {
         parseString(data, function (err, result) {
 
-          for (var i = 0; i < result.Medicine.medicineID.length; i++) {
-            me.medicineData.push({'name': result.Medicine.medicineID[0].name});
+          var medicines = result.Medicine.medicineID;
+
+          for (var i = 0; i < medicines.length; i++) {
+            me.medicineData.push({'name': medicines[0].name});
           }
 
-          me.getTestSessionData2();
+          me.getTestSessionData();
         });
       });
   },
 
   /**
    * This function assumes that ALL testsessions are accessible by the user with userid 1
+   * This is a hack, normally I would need to use the userid from the current user session.
    */
-  getTestSessionData2() {
-    console.log('getTestSessionData2');
+  getTestSessionData() {
+    console.log('getTestSessionData');
 
     request('http://4me302-16.site88.net/getFilterData.php?parameter=User_IDmed&value=1',
       function(error, response, data) {
@@ -171,7 +168,7 @@ me.csvDatasets = [];
   },
 
   parseCSVDatasets(datasets) {
-    console.log('parseCSVDatasets', datasets.length);
+    console.log('parseCSVDatasets');
 
     async.map(datasets, function (dataset, callback) {
 
@@ -184,6 +181,20 @@ me.csvDatasets = [];
           var resultObj = {};
 
           if (!error) {
+
+            for(var i = 0; i < output.length; i++) {
+
+              if(i === 0 && output[i] !== 'ID') {
+                  output[i].unshift('ID');
+              } else {
+                  output[i].unshift('');
+
+                for (var j = 1; j < output[i].length; j++) {
+                  output[i][j] = Number(output[i][j]);
+                }
+              }
+            }
+
             resultObj.body = output;
             resultObj.testSessionID = dataset.testSessionID;
             callback(null, resultObj);
@@ -197,22 +208,56 @@ me.csvDatasets = [];
     function (error, results) {
 
       if (!error) {
-        console.log('parseCSVDatasets results',results.length, results[0].testSessionID);
 
         for (var i = 0; i < results.length; i++) {
           me.testSessionData[i].csvData = results[i].body;
         }
-console.log('me.testSessions ---', me.testSessionData.length, me.testSessionData);
-        me.assemblePatientData();
+
+        me.getNoteData();
       }
     });
   },
 
+  getNoteData() {
+    request("http://4me302-16.site88.net/getData.php?table=Note",
+      function(error, response, data) {
+        parseString(data, function (err, result) {
+
+          var notes = result.Note.noteID;
+
+          for (var i = 0; i < notes.length; i++) {
+            me.noteData.push({
+              'testSessionID': notes[0].Test_Session_IDtest_session,
+              'userID': notes[0].User_IDmed,
+              'note': notes[0].note
+            });
+          }
+console.log(me.noteData);
+          me.assemblePatientData();
+        });
+      });
+  },
+
   /**
-   * This function takes all the data that was collected through previous requests
-   * and "assembles" complete patient data objects, by creating one object for each
-   * patient that contains the patient name and his testsessions... ;)
-   */
+  * Check if this testsession has notes and append them if there are any
+  */
+  appendNotes(testSession) {
+
+    testSession.notes = [];
+
+    for (var i = 0; i < me.noteData.length; i++) {
+
+      if (parseInt(me.noteData[i].testSessionID) === parseInt(testSession.id)) {
+        testSession.notes.push(me.noteData[i]);
+      }
+    }
+  },
+
+  /**
+  * This function takes all the data that was collected through previous requests
+  * and "assembles" complete patient data objects, by creating one object for each
+  * patient that contains the patient name and his testsessions... ;)
+  */
   assemblePatientData() {
 
     var currentPatientID = me.testSessionData[0].patientID;
@@ -223,6 +268,8 @@ console.log('me.testSessions ---', me.testSessionData.length, me.testSessionData
     });
 
     for (var i = 0; i < me.testSessionData.length; i++) {
+
+      me.appendNotes(me.testSessionData[i]);
 
       if (me.testSessionData[i].patientID !== currentPatientID) {
 
@@ -249,17 +296,6 @@ console.log('me.testSessions ---', me.testSessionData.length, me.testSessionData
       if (parseInt(me.userData[i].id) === patientID) {
         return me.userData[i].username[0];
       }
-    }
-  },
-
-  /*
-  * Helper to map users from our db to api users
-  */
-  setUserID(username) {
-    if (username === 'doc') {
-      me.userID = 1;
-    } if (username === 'researcher') {
-      me.userID = 2;
     }
   },
 

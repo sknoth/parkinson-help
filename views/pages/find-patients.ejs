@@ -8,9 +8,39 @@
     <% include ../partials/header %>
 
     <main>
+      <% if (typeof user != 'undefined' && (user.Role_RoleID === 1 || user.Role_RoleID === 2)) { %>
+          <div class="alert alert-danger" role="alert">
+            You are not allowed to see this page.
+          </div>
+      <% } else { %>
+        <div id="map" style="width: 100%; height: 60vh;"></div>
+        <hr>
+        <section>
+          <h2>
+            <%= articles[0].title %><br>
+            <small><%= articles[0].description %></small>
+          </h2>
+          <p>src: <a href="<%= articles[0].link %>"><%= articles[0].link %></a></p>
+          <hr>
+          <ul class="list-unstyled">
+          <% for(var i = 0; i < articles[0].item.length; i++) { %>
+            <li>
+              <h4><%= articles[0].item[i].title %></h4>
+              <small>Published on: <%= articles[0].item[i].pubDate %></small>
+              <p>
+                <%= articles[0].item[i].description %>
+              </p>
+              <p>
+                <a href="<%= articles[0].item[i].link %>">read more</a>
+                <a class="pull-right" href="<%= articles[0].item[i].comments %>">view comments</a>
+              </p>
+              <hr>
+            </li>
+          <% }; %>
+        </ul>
+        </section>
 
-      <div id="map" style="width: 100%; height: 60vh;"></div>
-
+      <% } %>
       <% include ../partials/footer %>
       <script type="text/javascript">
         <% include ../components/find-patients.js %>

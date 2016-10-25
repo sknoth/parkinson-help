@@ -10,6 +10,7 @@ var me = module.exports = {
   therapyData: [],
   therapyListData: [],
   testSessions: [],
+  videoIds: [],
   userID: 0,
   page: '',
   req: '',
@@ -82,7 +83,7 @@ var me = module.exports = {
             console.log('testSessions', me.therapyListData, me.testSessions[i].therapyID);
 
             therapyID = me.therapyData[me.testSessions[i].therapyID-1].TherapyList_IDtherapylist;
-            
+
             me.testSessions[i].therapyName = me.therapyListData[therapyID-1].name;
             me.testSessions[i].dosage = me.therapyListData[therapyID-1].Dosage;
 
@@ -92,9 +93,30 @@ var me = module.exports = {
             me.testSessions[i].dataURL = 'http://4me302-16.site88.net/'+ me.testSessions[i].DataURL + '.csv'
           }
 
-          me.render();
+          me.getVideos();
         });
       });
+  },
+
+  getVideos() {
+    request("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=PLwKZdOHmwfHGBPT0t5j3NWjrSGil2UNGD&maxResults=5&key=AIzaSyCHO1c4kXxpJx34Pf0ETlXkA-MeDFVznTU",
+      function(error, response, data) {
+
+        var data = JSON.parse(data);
+        var videos = data.items;
+
+        for (var key in videos) {
+          me.videoIds.push(videos[key].snippet.resourceId.videoId);
+        }
+
+        me.calculateTestSessionStatistics();
+      });
+  },
+
+  calculateTestSessionStatistics() {
+
+    console.log(me.testSessions[0]);
+    me.render();
   },
 
   renderPage(page, req, res) {
@@ -127,7 +149,8 @@ var me = module.exports = {
     me.res.render(me.page, {
       message: me.req.flash('manage-patients'),
       user : me.req.user,
-      testSessions: me.testSessions
+      testSessions: me.testSessions,
+      videoIds: me.videoIds
     });
   }
 }
