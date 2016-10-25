@@ -18,7 +18,7 @@ module.exports = function(app, passport) {
       myExercises.renderPage('pages/my-exercises.ejs', req, res);
     });
 
-    app.get('/doctor-dashboard',  function(req, res) {
+    app.get('/doctor-dashboard', isLoggedIn, function(req, res) {
       doctorDashboard.renderPage('pages/doctor-dashboard.ejs', req, res);
     });
 
